@@ -1,0 +1,4 @@
+/target
+*/*.fits
+*.fits
+Cargo.lock
