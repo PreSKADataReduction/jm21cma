@@ -208,14 +208,14 @@ fn main() {
         println!("{}", f_idx);
         let freq=(freq_min+f_idx as f64*dfreq)*1e6;
         let lambda=C/freq;
-        let phases=calc_phase_from_pointing(&ant_x, &ant_y, &ant_z, az0.to_radians(), zenith0.to_radians(), freq);
+        let phases=calc_phase_from_pointing(&ant_x, &ant_y, &ant_z, az0.to_radians(), zenith0.to_radians(), lambda);
         //println!("{:?}", phases);
         for phi_idx in 0..nphi{
             let phi=phi_min+phi_idx as f64*dphi;
             for theta_idx in 0..ntheta{
                 let row_idx=theta_idx+phi_idx*ntheta;
                 let theta=theta_min+theta_idx as f64*dtheta;
-                let pointing=angle2vec(phi, theta);
+                let pointing=angle2vec(phi.to_radians(), theta.to_radians());
                 let array_beam=calc_array_beam1(&pointing, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda);
                 let dipole_jones=x_dipole_jones(-phi.to_radians(), theta.to_radians(), lambda, dipole_len);
                 buf[(row_idx, 0)]=theta;
