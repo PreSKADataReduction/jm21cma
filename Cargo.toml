@@ -17,4 +17,4 @@ features = ['derive']
 version = '1.0.136'
 
 [dependencies.scorus]
-git="git://github.com/astrojhgu/scorus.git"
+git="https://github.com/astrojhgu/scorus.git"

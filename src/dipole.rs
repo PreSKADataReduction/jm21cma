@@ -1,6 +1,9 @@
+#![allow(non_snake_case)]
+
 use num::complex::Complex;
 use scorus::coordinates::{SphCoord,Vec3d};
 use std::f64::consts::PI;
+
 
 pub fn z_dipole_E(theta:f64, lambda:f64, L:f64)->f64{
     if theta.sin()==0.0{
@@ -16,6 +19,7 @@ pub fn z_dipole_E(theta:f64, lambda:f64, L:f64)->f64{
         
     }
 }
+
 
 pub fn x_dipole_E(az_from_x:f64, pol:f64, lambda:f64, L:f64)->(f64,f64){
     /*
@@ -44,6 +48,7 @@ pub fn x_dipole_E(az_from_x:f64, pol:f64, lambda:f64, L:f64)->(f64,f64){
     let e_phi=vaz.dot(e_xyz);
     (e_theta, e_phi)
 }
+
 
 
 pub fn x_dipole_jones(az_from_x: f64, pol: f64, lambda: f64, L: f64)->[Complex<f64>; 4]{
