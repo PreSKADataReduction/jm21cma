@@ -1,0 +1,20 @@
+[package]
+name = "jones21cma"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num={version='0.4.0'}
+clap={version='3.1.18'}
+serde_yaml = '0.8.23'
+ndarray='0.15.4'
+fitsio={version='0.19.0', features=[]}
+
+[dependencies.serde]
+features = ['derive']
+version = '1.0.136'
+
+[dependencies.scorus]
+git="git://github.com/astrojhgu/scorus.git"

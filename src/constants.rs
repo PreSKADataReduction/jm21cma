@@ -1,0 +1,1 @@
+pub const LIGHT_SPEED: f64 = 2.99792458E8;
