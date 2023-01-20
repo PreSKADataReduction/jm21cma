@@ -11,6 +11,7 @@ clap={version='3.1.18'}
 serde_yaml = '0.8.23'
 ndarray='0.15.4'
 fitsio={version='0.19.0', features=[]}
+healpix_fits={git="https://github.com/astrojhgu/healpix_fits.git"}
 
 [dependencies.serde]
 features = ['derive']
