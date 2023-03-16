@@ -15,7 +15,7 @@ use jones21cma::{
     utils::angle2vec,
 };
 
-use ndarray::{Array2, Array5};
+use ndarray::{Array2, Array5, s};
 
 use scorus::{
     coordinates::{SphCoord, Vec3d},
@@ -128,6 +128,8 @@ fn main() {
             lambda,
         );
 
+        let mut beam_max=0.0;
+
         for iy in 0..args.fovw_pix {
             let y = if PROJ == "SIN" {
                 ((iy as isize - half_fov_pix) as f64 * dx).sin()
@@ -159,10 +161,18 @@ fn main() {
                 let array_beam =
                     calc_array_beam1(&v, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda)
                         .norm_sqr();
-                img[(ifreq, 0, 0, iy, ix)] = ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
+                let total_beam=ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
+                img[(ifreq, 0, 0, iy, ix)] = total_beam;
+                if beam_max <total_beam{
+                    beam_max=total_beam;
+                }
                 //img[(iy, ix)]=dir.pol.to_degrees();
             }
         }
+
+        img.slice_mut(s![ifreq, 0, 0, .., ..]).iter_mut().for_each(|x|{
+            *x/=beam_max;
+        });
     }
 
     let image_description = ImageDescription {
