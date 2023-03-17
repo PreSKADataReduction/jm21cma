@@ -6,9 +6,9 @@ use fitsio::{
     }
 };
 
-use jones21cma::{
+use jm21cma::{
     dipole::{
-        x_dipole_jones, lp_ant_jones
+        lp_ant_jones
     }
     , cfg::{
         ArrayCfg

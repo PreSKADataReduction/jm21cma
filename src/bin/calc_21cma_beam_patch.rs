@@ -1,31 +1,24 @@
-use healpix_fits::write_map;
-use necrs::nec_parser::{parse_nec_file, NecParser, Rule};
-
 use fitsio::{
     images::{ImageDescription, ImageType},
     FitsFile,
 };
 
-use jones21cma::{
+use jm21cma::{
     arbitrary_array::{calc_array_beam1, calc_phase_from_pointing},
     cfg::ArrayCfg,
     constants::LIGHT_SPEED as C,
-    dipole::{lp_ant_jones, x_dipole_jones},
     single_ant_model::SingleAnt,
-    utils::angle2vec,
 };
 
-use ndarray::{Array2, Array5, s};
+use ndarray::{Array5, s};
 
 use scorus::{
     coordinates::{SphCoord, Vec3d},
-    healpix::pix2ang_ring,
 };
-use serde_yaml::{from_reader, with::singleton_map};
+use serde_yaml::{from_reader};
 
 use std::{
     fs::{remove_file, File},
-    io::read_to_string,
 };
 
 use clap::Parser;
@@ -186,7 +179,7 @@ fn main() {
         .open()
         .unwrap();
 
-    let mut hdu = output_fits.primary_hdu().unwrap();
+    let hdu = output_fits.primary_hdu().unwrap();
     hdu.write_image(&mut output_fits, img.as_slice().unwrap())
         .unwrap();
     hdu.write_key(&mut output_fits, "CTYPE1", "py").unwrap();

@@ -1,3 +1,6 @@
+#![allow(non_snake_case)]
+
+
 use fitsio::FitsFile;
 use healpix_fits::read_map;
 use scorus::{

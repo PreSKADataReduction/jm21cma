@@ -5,6 +5,9 @@ stdenv.mkDerivation {
     buildInputs = [clang
     cfitsio
     pkg-config
+    libtool
+    automake
+    autoconf
     ];
     hardeningDisable = [ "all" ];
     #buildInputs = [gcc-unwrapped gcc-unwrapped.out gcc-unwrapped.lib];
