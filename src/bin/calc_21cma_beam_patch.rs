@@ -35,6 +35,7 @@ struct Args {
     #[clap(
         short = 'a',
         long = "az0",
+        allow_hyphen_values = true, 
         value_name = "phase center az, east=0, north=90"
     )]
     az0: f64,
@@ -93,12 +94,6 @@ fn main() {
     let dirc = SphCoord::new(args.zenith0.to_radians(), args.az0.to_radians());
     let vx = dirc.vdaz() * -1.0;
     let vy = dirc.vdpol() * -1.0;
-
-    println!("dx: {dx}");
-    println!("{:?}", vx);
-    println!("{:?}", vy);
-    println!("{:?}", vc);
-
     let mut freq0=0.0;
     let mut dfreq=0.0;
     for (ifreq, bn) in args.ant_beam_name.iter().enumerate() {
