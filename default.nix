@@ -3,9 +3,15 @@ with import <nixpkgs> {};
 stdenv.mkDerivation {
     name = "mpi_rust"; # Probably put a more meaningful name here
     buildInputs = [clang
+    llvmPackages.libclang.lib
+    lapack
+    gcc
+    blas
     cfitsio
     pkg-config
     libtool
+    gfortran
+    (lib.getLib gfortran.cc)
     automake
     autoconf
     ];
