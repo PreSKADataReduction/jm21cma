@@ -17,7 +17,7 @@ cd jm21cma
 ```
 
 # Usage
-## calculate the jones matrix (not yet validated, use with care)
+## calculate the jones matrix (not yet validated, use with caution)
 The parameters are self-explained as
 ```bash
 cargo run --bin calc_21cma_jones.rs --release -- --theta-min 0 --theta-max 90 --ntheta 10 --phi-min 0 --phi-max 360 --nphi 37 --freq-min 50 --freq-max 100 --nfreq 10 --zenith0 48 --az0 -90 --array 21cma.yaml --dipole-len 1 --out a.fits
