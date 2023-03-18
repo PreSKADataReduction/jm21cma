@@ -16,6 +16,17 @@ git clone https://github.com/PreSKADataReduction/jm21cma
 cd jm21cma
 ```
 
+# Compilation 
+## If you are using `NIXOS` Linux, first run command 
+```bash
+nix-shell
+```
+
+## Then build the binary 
+```
+cargo build --release
+```
+
 # Usage
 ## calculate the jones matrix (not yet validated, use with caution)
 The parameters are self-explained as
