@@ -119,7 +119,7 @@ fn main() {
         let mut beam_max=0.0;
 
         for iy in 0..args.fovw_pix {
-            let y = if PROJ == "SIN" {
+            let y = -if PROJ == "SIN" { // matplotlib imshow convention
                 ((iy as isize - half_fov_pix) as f64 * dx).sin()
             } else if PROJ == "TAN" {
                 (iy as isize - half_fov_pix) as f64 * dx
