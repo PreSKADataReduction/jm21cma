@@ -80,7 +80,7 @@ fn write_fits(
     let hdu = output_fits.primary_hdu().unwrap();
     hdu.write_image(&mut output_fits, efield_pattern.as_slice().unwrap())
         .unwrap();
-    hdu.write_key(&mut output_fits, "CTYPE1", "L").unwrap();
+    hdu.write_key(&mut output_fits, "CTYPE1", "X").unwrap();
     hdu.write_key(&mut output_fits, "CRPIX1", fovw_pix as u32 / 2)
         .unwrap();
     hdu.write_key(&mut output_fits, "CDELT1", fov_w_deg / fovw_pix as f64)
@@ -88,7 +88,7 @@ fn write_fits(
     hdu.write_key(&mut output_fits, "CRVAL1", 0.0).unwrap();
     hdu.write_key(&mut output_fits, "CUNIT1", "deg").unwrap();
 
-    hdu.write_key(&mut output_fits, "CTYPE2", "M").unwrap();
+    hdu.write_key(&mut output_fits, "CTYPE2", "Y").unwrap();
     hdu.write_key(&mut output_fits, "CRPIX2", fovw_pix as u32 / 2)
         .unwrap();
     hdu.write_key(&mut output_fits, "CDELT2", fov_w_deg / fovw_pix as f64)
