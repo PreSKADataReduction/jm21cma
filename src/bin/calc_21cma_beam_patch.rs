@@ -10,16 +10,12 @@ use jm21cma::{
     single_ant_model::SingleAnt,
 };
 
-use ndarray::{Array5, s};
+use ndarray::{s, Array5, ArrayView5};
 
-use scorus::{
-    coordinates::{SphCoord, Vec3d},
-};
-use serde_yaml::{from_reader};
+use scorus::coordinates::{SphCoord, Vec3d};
+use serde_yaml::from_reader;
 
-use std::{
-    fs::{remove_file, File},
-};
+use std::fs::{remove_file, File};
 
 use clap::Parser;
 
@@ -35,7 +31,7 @@ struct Args {
     #[clap(
         short = 'a',
         long = "az0",
-        allow_hyphen_values = true, 
+        allow_hyphen_values = true,
         value_name = "phase center az, east=0, north=90"
     )]
     az0: f64,
@@ -52,13 +48,72 @@ struct Args {
     #[clap(short = 'p', long = "fov_pix", value_name = "width in npix")]
     fovw_pix: usize,
 
-    #[clap(short = 'o', long = "out", value_name = "outfits")]
-    outfile: String,
+    #[clap(short = 'o', long = "out", value_name = "out prefix")]
+    out_prefix: String, 
+
 }
 
 //use scorus::{
 //    coordinates::Vec3d
 //};
+
+fn write_fits(
+    fname: &str,
+    efield_pattern: ArrayView5<f64>,
+    fov_w_deg: f64,
+    freq0: f64,
+    dfreq: f64,
+) {
+    let nfreq = efield_pattern.shape()[0];
+    let fovw_pix = efield_pattern.shape()[3];
+
+    let image_description = ImageDescription {
+        data_type: ImageType::Double,
+        dimensions: &[nfreq, 1, 1, fovw_pix, fovw_pix],
+    };
+    let _ = remove_file(fname);
+    let mut output_fits = FitsFile::create(fname)
+        .with_custom_primary(&image_description)
+        .open()
+        .unwrap();
+
+    let hdu = output_fits.primary_hdu().unwrap();
+    hdu.write_image(&mut output_fits, efield_pattern.as_slice().unwrap())
+        .unwrap();
+    hdu.write_key(&mut output_fits, "CTYPE1", "py").unwrap();
+    hdu.write_key(&mut output_fits, "CRPIX1", fovw_pix as u32 / 2)
+        .unwrap();
+    hdu.write_key(&mut output_fits, "CDELT1", fov_w_deg / fovw_pix as f64)
+        .unwrap();
+    hdu.write_key(&mut output_fits, "CRVAL1", 0.0).unwrap();
+    hdu.write_key(&mut output_fits, "CUNIT1", "deg").unwrap();
+
+    hdu.write_key(&mut output_fits, "CTYPE2", "px").unwrap();
+    hdu.write_key(&mut output_fits, "CRPIX2", fovw_pix as u32 / 2)
+        .unwrap();
+    hdu.write_key(&mut output_fits, "CDELT2", fov_w_deg / fovw_pix as f64)
+        .unwrap();
+    hdu.write_key(&mut output_fits, "CRVAL2", 0.0).unwrap();
+    hdu.write_key(&mut output_fits, "CUNIT2", "deg").unwrap();
+
+    hdu.write_key(&mut output_fits, "CTYPE3", "").unwrap();
+    hdu.write_key(&mut output_fits, "CRPIX3", 1).unwrap();
+    hdu.write_key(&mut output_fits, "CRVAL3", 0).unwrap();
+    hdu.write_key(&mut output_fits, "CDELT3", 1).unwrap();
+    hdu.write_key(&mut output_fits, "CUNIT3", "").unwrap();
+
+    hdu.write_key(&mut output_fits, "CTYPE4", "").unwrap();
+    hdu.write_key(&mut output_fits, "CRPIX4", 1).unwrap();
+    hdu.write_key(&mut output_fits, "CRVAL4", 0).unwrap();
+    hdu.write_key(&mut output_fits, "CDELT4", 1).unwrap();
+    hdu.write_key(&mut output_fits, "CUNIT4", "").unwrap();
+
+    hdu.write_key(&mut output_fits, "CTYPE5", "FREQ").unwrap();
+    hdu.write_key(&mut output_fits, "CRPIX5", 1).unwrap();
+    hdu.write_key(&mut output_fits, "CRVAL5", freq0).unwrap();
+    hdu.write_key(&mut output_fits, "CDELT5", dfreq).unwrap();
+    hdu.write_key(&mut output_fits, "CUNIT5", "Hz").unwrap();
+}
 
 fn main() {
     let args = Args::parse();
@@ -81,7 +136,10 @@ fn main() {
     //let x=calc_array_beam1(&angle2vec(0.0_f64.to_radians(), 0.0_f64.to_radians()), &ant_x, &ant_y, &ant_z, &w_list, &phases, 1.0);
     //println!("{}", x);
 
-    let mut img =
+    let mut efield_pattern =
+        Array5::<f64>::zeros((args.ant_beam_name.len(), 1, 1, args.fovw_pix, args.fovw_pix));
+
+    let efield_pattern0 =
         Array5::<f64>::zeros((args.ant_beam_name.len(), 1, 1, args.fovw_pix, args.fovw_pix));
 
     let az_from_east = -args.az0;
@@ -94,16 +152,16 @@ fn main() {
     let dirc = SphCoord::new(args.zenith0.to_radians(), args.az0.to_radians());
     let vx = dirc.vdaz() * -1.0;
     let vy = dirc.vdpol() * -1.0;
-    let mut freq0=0.0;
-    let mut dfreq=0.0;
+    let mut freq0 = 0.0;
+    let mut dfreq = 0.0;
     for (ifreq, bn) in args.ant_beam_name.iter().enumerate() {
         let ant_beam = SingleAnt::from_fits(bn);
         let freq = ant_beam.freq_MHz * 1e6;
         println!("freq={} MHz", ant_beam.freq_MHz);
-        if ifreq==0{
-            freq0=ant_beam.freq_MHz*1e6;
-        }else if ifreq==1{
-            dfreq=ant_beam.freq_MHz*1e6-freq0;
+        if ifreq == 0 {
+            freq0 = ant_beam.freq_MHz * 1e6;
+        } else if ifreq == 1 {
+            dfreq = ant_beam.freq_MHz * 1e6 - freq0;
         }
 
         let lambda = C / freq;
@@ -116,10 +174,11 @@ fn main() {
             lambda,
         );
 
-        let mut beam_max=0.0;
+        let mut beam_max = 0.0;
 
         for iy in 0..args.fovw_pix {
-            let y = -if PROJ == "SIN" { // matplotlib imshow convention
+            let y = -if PROJ == "SIN" {
+                // matplotlib imshow convention
                 ((iy as isize - half_fov_pix) as f64 * dx).sin()
             } else if PROJ == "TAN" {
                 (iy as isize - half_fov_pix) as f64 * dx
@@ -149,64 +208,42 @@ fn main() {
                 let array_beam =
                     calc_array_beam1(&v, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda)
                         .norm_sqr();
-                let total_beam=ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
-                img[(ifreq, 0, 0, iy, ix)] = total_beam;
-                if beam_max <total_beam{
-                    beam_max=total_beam;
+                let total_beam = ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
+                efield_pattern[(ifreq, 0, 0, iy, ix)] = total_beam;
+                if beam_max < total_beam {
+                    beam_max = total_beam;
                 }
-                //img[(iy, ix)]=dir.pol.to_degrees();
+                //efield_pattern[(iy, ix)]=dir.pol.to_degrees();
             }
         }
 
-        img.slice_mut(s![ifreq, 0, 0, .., ..]).iter_mut().for_each(|x|{
-            *x/=beam_max;
-        });
+        efield_pattern
+            .slice_mut(s![ifreq, 0, 0, .., ..])
+            .iter_mut()
+            .for_each(|x| {
+                *x /= beam_max;
+            });
     }
 
-    let image_description = ImageDescription {
-        data_type: ImageType::Double,
-        dimensions: &[args.ant_beam_name.len(), 1, 1, args.fovw_pix, args.fovw_pix],
-    };
-
-    let _ = remove_file(&args.outfile);
-    let mut output_fits = FitsFile::create(&args.outfile)
-        .with_custom_primary(&image_description)
-        .open()
-        .unwrap();
-
-    let hdu = output_fits.primary_hdu().unwrap();
-    hdu.write_image(&mut output_fits, img.as_slice().unwrap())
-        .unwrap();
-    hdu.write_key(&mut output_fits, "CTYPE1", "py").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX1", args.fovw_pix as u32/2).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT1", args.fov_w_deg/args.fovw_pix as f64).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL1", 0.0).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT1", "deg").unwrap();
-
-    hdu.write_key(&mut output_fits, "CTYPE2", "px").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX2", args.fovw_pix as u32/2).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT2", args.fov_w_deg/args.fovw_pix as f64).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL2", 0.0).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT2", "deg").unwrap();
-
-    hdu.write_key(&mut output_fits, "CTYPE3", "").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX3", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL3", 0).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT3",1).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT3", "").unwrap();
-
-    hdu.write_key(&mut output_fits, "CTYPE4", "").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX4", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL4", 0).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT4",1).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT4", "").unwrap();
-
-    hdu.write_key(&mut output_fits, "CTYPE5", "FREQ").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX5", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL5", freq0).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT5",dfreq).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT5", "Hz").unwrap();
-
+    for name in ["xx_re", "yy_re"]{
+        write_fits(
+            &format!("{}_{}.fits", args.out_prefix, name), 
+            efield_pattern.view(),
+            args.fov_w_deg,
+            freq0,
+            dfreq,
+        );
+    }
+    
+    for name in ["xx_im", "yy_im", "xy_re", "yx_re", "xy_im", "yx_im"]{
+        write_fits(
+            &format!("{}_{}.fits", args.out_prefix, name), 
+            efield_pattern0.view(),
+            args.fov_w_deg,
+            freq0,
+            dfreq,
+        );
+    }
 
     //println!("{:?}", result);
 }
