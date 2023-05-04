@@ -43,5 +43,6 @@ cargo run --bin calc_21cma_jones.rs --release -- --theta-min 0 --theta-max 90 --
 
 2. calcualte the array beam pattern
 ```bash
-./scripts/calc_array_beam_patch.sh output_beam.fits beam_101.fits beam_102.fits beam_103.fits
+./scripts/calc_array_beam_patch.sh beam beam_101.fits beam_102.fits beam_103.fits
 ```
+
