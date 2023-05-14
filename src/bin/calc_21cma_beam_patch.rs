@@ -10,7 +10,7 @@ use jm21cma::{
     single_ant_model::SingleAnt,
 };
 
-use ndarray::{s, Array5, ArrayView5};
+use ndarray::{s, Array3, ArrayView3};
 
 use scorus::coordinates::{SphCoord, Vec3d};
 use serde_yaml::from_reader;
@@ -59,7 +59,7 @@ struct Args {
 
 fn write_fits(
     fname: &str,
-    efield_pattern: ArrayView5<f64>,
+    efield_pattern: ArrayView3<f64>,
     fov_w_deg: f64,
     freq0: f64,
     dfreq: f64,
@@ -96,23 +96,11 @@ fn write_fits(
     hdu.write_key(&mut output_fits, "CRVAL2", 0.0).unwrap();
     hdu.write_key(&mut output_fits, "CUNIT2", "deg").unwrap();
 
-    hdu.write_key(&mut output_fits, "CTYPE3", "").unwrap();
+    hdu.write_key(&mut output_fits, "CTYPE3", "FREQ").unwrap();
     hdu.write_key(&mut output_fits, "CRPIX3", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL3", 0).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT3", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT3", "").unwrap();
-
-    hdu.write_key(&mut output_fits, "CTYPE4", "").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX4", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL4", 0).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT4", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT4", "").unwrap();
-
-    hdu.write_key(&mut output_fits, "CTYPE5", "FREQ").unwrap();
-    hdu.write_key(&mut output_fits, "CRPIX5", 1).unwrap();
-    hdu.write_key(&mut output_fits, "CRVAL5", freq0).unwrap();
-    hdu.write_key(&mut output_fits, "CDELT5", dfreq).unwrap();
-    hdu.write_key(&mut output_fits, "CUNIT5", "Hz").unwrap();
+    hdu.write_key(&mut output_fits, "CRVAL3", freq0).unwrap();
+    hdu.write_key(&mut output_fits, "CDELT3", dfreq).unwrap();
+    hdu.write_key(&mut output_fits, "CUNIT3", "Hz").unwrap();
 }
 
 fn main() {
@@ -137,10 +125,10 @@ fn main() {
     //println!("{}", x);
 
     let mut efield_pattern =
-        Array5::<f64>::zeros((args.ant_beam_name.len(), 1, 1, args.fovw_pix, args.fovw_pix));
+        Array3::<f64>::zeros((args.ant_beam_name.len(), args.fovw_pix, args.fovw_pix));
 
     let efield_pattern0 =
-        Array5::<f64>::zeros((args.ant_beam_name.len(), 1, 1, args.fovw_pix, args.fovw_pix));
+        Array3::<f64>::zeros((args.ant_beam_name.len(), args.fovw_pix, args.fovw_pix));
 
     let az_from_east = -args.az0;
 
@@ -209,7 +197,8 @@ fn main() {
                     calc_array_beam1(&v, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda)
                         .norm_sqr();
                 let total_beam = ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
-                efield_pattern[(ifreq, 0, 0, iy, ix)] = total_beam;
+                //efield_pattern[(ifreq,iy, ix)] = total_beam;
+                efield_pattern[(ifreq,iy, ix)] = 1.0;
                 if beam_max < total_beam {
                     beam_max = total_beam;
                 }
@@ -218,7 +207,7 @@ fn main() {
         }
 
         efield_pattern
-            .slice_mut(s![ifreq, 0, 0, .., ..])
+            .slice_mut(s![ifreq, .., ..])
             .iter_mut()
             .for_each(|x| {
                 *x /= beam_max;
