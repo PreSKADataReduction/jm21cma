@@ -65,11 +65,11 @@ fn write_fits(
     dfreq: f64,
 ) {
     let nfreq = efield_pattern.shape()[0];
-    let fovw_pix = efield_pattern.shape()[3];
+    let fovw_pix = efield_pattern.shape()[1];
 
     let image_description = ImageDescription {
         data_type: ImageType::Double,
-        dimensions: &[nfreq, 1, 1, fovw_pix, fovw_pix],
+        dimensions: &[nfreq,fovw_pix, fovw_pix],
     };
     let _ = remove_file(fname);
     let mut output_fits = FitsFile::create(fname)
@@ -197,12 +197,11 @@ fn main() {
                     calc_array_beam1(&v, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda)
                         .norm_sqr();
                 let total_beam = ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
-                //efield_pattern[(ifreq,iy, ix)] = total_beam;
-                efield_pattern[(ifreq,iy, ix)] = 1.0;
+                efield_pattern[(ifreq,iy, ix)] = total_beam.sqrt();
+                //efield_pattern[(ifreq,iy, ix)] = 1.0;
                 if beam_max < total_beam {
                     beam_max = total_beam;
                 }
-                //efield_pattern[(iy, ix)]=dir.pol.to_degrees();
             }
         }
 
