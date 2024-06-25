@@ -5,7 +5,7 @@ DATA_DIR=$SCRIPT_HOME/../data
 echo $SCRIPT_HOME
 echo $DATA_DIR
 LAT=42.552673743
-FOV_W=20
+FOV_W=60
 FOV_PIX=1024
 
 if [ $# -lt 2 ]
