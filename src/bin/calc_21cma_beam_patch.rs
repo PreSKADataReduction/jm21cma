@@ -49,8 +49,7 @@ struct Args {
     fovw_pix: usize,
 
     #[clap(short = 'o', long = "out", value_name = "out prefix")]
-    out_prefix: String, 
-
+    out_prefix: String,
 }
 
 //use scorus::{
@@ -69,7 +68,7 @@ fn write_fits(
 
     let image_description = ImageDescription {
         data_type: ImageType::Double,
-        dimensions: &[nfreq,fovw_pix, fovw_pix],
+        dimensions: &[nfreq, fovw_pix, fovw_pix],
     };
     let _ = remove_file(fname);
     let mut output_fits = FitsFile::create(fname)
@@ -191,17 +190,20 @@ fn main() {
                     panic!("invalid proj")
                 }
                 .normalized();
-
-                let dir = SphCoord::from_vec3d(v);
-                let array_beam =
-                    calc_array_beam1(&v, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda)
-                        .norm_sqr();
-                let total_beam = ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
-                efield_pattern[(ifreq,iy, ix)] = total_beam.sqrt();
-                //efield_pattern[(ifreq,iy, ix)] = 1.0;
-                if beam_max < total_beam {
-                    beam_max = total_beam;
+                if v.x.is_normal() && v.y.is_normal() && v.y.is_normal() {
+                    let dir = SphCoord::from_vec3d(v);
+                    let array_beam =
+                        calc_array_beam1(&v, &ant_x, &ant_y, &ant_z, &w_list, &phases, lambda)
+                            .norm_sqr();
+                    let total_beam = ant_beam.power_pattern(dir.az, dir.pol) * array_beam;
+                    efield_pattern[(ifreq, iy, ix)] = total_beam.sqrt();
+                    if beam_max < total_beam {
+                        beam_max = total_beam;
+                    }
+                } else {
+                    efield_pattern[(ifreq, iy, ix)] = 0.0;
                 }
+                //efield_pattern[(ifreq,iy, ix)] = 1.0;
             }
         }
 
@@ -213,19 +215,19 @@ fn main() {
             });
     }
 
-    for name in ["xx_re", "yy_re"]{
+    for name in ["xx_re", "yy_re"] {
         write_fits(
-            &format!("{}_{}.fits", args.out_prefix, name), 
+            &format!("{}_{}.fits", args.out_prefix, name),
             efield_pattern.view(),
             args.fov_w_deg,
             freq0,
             dfreq,
         );
     }
-    
-    for name in ["xx_im", "yy_im", "xy_re", "yx_re", "xy_im", "yx_im"]{
+
+    for name in ["xx_im", "yy_im", "xy_re", "yx_re", "xy_im", "yx_im"] {
         write_fits(
-            &format!("{}_{}.fits", args.out_prefix, name), 
+            &format!("{}_{}.fits", args.out_prefix, name),
             efield_pattern0.view(),
             args.fov_w_deg,
             freq0,
