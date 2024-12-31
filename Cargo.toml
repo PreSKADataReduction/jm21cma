@@ -12,16 +12,16 @@ features = []
 version = '0.21.2'
 
 [dependencies.healpix_fits]
-git = 'https://github.com/astrojhgu/healpix_fits.git'
+path = '../healpix_fits'
 
 [dependencies.necrs]
-git = 'https://github.com/astrojhgu/necrs.git'
+path = '../necrs'
 
 [dependencies.num]
 version = '0.4.1'
 
 [dependencies.scorus]
-git = 'https://github.com/astrojhgu/scorus.git'
+path = '../scorus'
 
 [dependencies.serde]
 features = ['derive']
