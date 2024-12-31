@@ -5,6 +5,7 @@ stdenv.mkDerivation {
     buildInputs = [clang
     llvmPackages.libclang.lib
     lapack
+    necpp
     gcc
     blas
     cfitsio
